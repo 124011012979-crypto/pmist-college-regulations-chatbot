@@ -4,7 +4,8 @@ from flask import Flask, request, jsonify, send_from_directory
 from dotenv import load_dotenv
 
 load_dotenv()  # reads the .env file
-app = Flask(__name__, static_folder="static")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app = Flask(__name__, static_folder=BASE_DIR)
 
 API_KEY = os.getenv("API_KEY", "")
 API_URL = os.getenv("API_URL", "https://api.groq.com/openai/v1/chat/completions")
@@ -22,7 +23,7 @@ SYSTEM = (
 
 @app.route("/")
 def home():
-    return send_from_directory("static", "index.html")
+    return send_from_directory(BASE_DIR, "index.html")
 
 
 @app.route("/chat", methods=["POST"])

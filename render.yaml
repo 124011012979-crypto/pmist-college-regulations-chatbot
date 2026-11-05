@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: pmist-college-regulations-chatbot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn sstatic.app:app
+    envVars:
+      - key: API_KEY
+        sync: false
