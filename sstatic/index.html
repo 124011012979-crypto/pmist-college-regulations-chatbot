@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PMIST Regulations Chatbot</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1d2433;--mut:#5b6478;--pri:#1f4fd8;--priInk:#fff;--bot:#eef1f9;--bd:#dfe3ee;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1420;--card:#171e2e;--ink:#e8ecf6;--mut:#9aa5bf;--pri:#5b8cff;--priInk:#0b1020;--bot:#1f2840;--bd:#2a3550}}
+:root[data-theme="dark"]{--bg:#0f1420;--card:#171e2e;--ink:#e8ecf6;--mut:#9aa5bf;--pri:#5b8cff;--priInk:#0b1020;--bot:#1f2840;--bd:#2a3550}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;min-height:100%}
+header{background:var(--pri);color:var(--priInk);border-radius:16px;padding:18px 20px}
+header h1{margin:0 0 4px;font-size:21px}
+header p{margin:0;opacity:.9;font-size:13.5px}
+.chat{background:var(--card);border:1px solid var(--bd);border-radius:16px;display:flex;flex-direction:column;flex:1;min-height:420px}
+#log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;max-height:58vh}
+.m{max-width:85%;padding:10px 14px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word}
+.m.b{background:var(--bot);align-self:flex-start;border-bottom-left-radius:4px}
+.m.u{background:var(--pri);color:var(--priInk);align-self:flex-end;border-bottom-right-radius:4px}
+.m small{display:block;margin-top:6px;color:var(--mut);font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px}
+.chips button{border:1px solid var(--bd);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer;font-size:13px}
+.chips button:hover{border-color:var(--pri);color:var(--pri)}
+.in{display:flex;gap:8px;padding:12px;border-top:1px solid var(--bd)}
+.in input{flex:1;padding:12px 14px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--ink);font-size:15px}
+.in button{padding:0 20px;border:0;border-radius:12px;background:var(--pri);color:var(--priInk);font-weight:600;cursor:pointer}
+footer{color:var(--mut);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>🎓 PMIST B.Tech Regulations Chatbot</h1>
+<p>Ask anything about Regulations R-2024 (CBCS): attendance, exams, grades, arrears, credits, projects and more.</p>
+</header>
+<div class="chat">
+<div id="log"></div>
+<div class="chips" id="chips"></div>
+<div class="in"><input id="q" placeholder="Type your question… (e.g. minimum attendance?)" autocomplete="off"><button id="send">Send</button></div>
+</div>
+<footer>Mini Project: College Regulations Chatbot · Source: PMIST B.Tech Regulations R-2024. For official decisions, confirm with your HoD / Dean (Academic Courses).</footer>
+</div>
+<script>
+// Knowledge base: [title, keywords, answer]
+var KB=[
+["Minimum attendance","attendance,75,percent attendance,minimum attendance,attend,detained","You need at least 75% attendance in every course (course-wise). (R7.3)\nIf you have 65% to below 75% because of medical reasons or sports events, with prior permission from HoD and Dean (FET), you can be exempted and write the exam. (R7.4)\nBelow 75% → grade ‘SA’ and you must redo the course. Below 65% → not allowed to write the exam. (R7.6, R7.7)\nIf you have shortage in all courses, you must repeat the semester. (R7.8)"],
+["Leave rules","leave,absent,absence,sick,medical leave,two weeks,withdraw semester","Less than 2 weeks: apply in advance to the HoD with documents. (R7.10)\nUnavoidable absence up to 2 weeks without prior application may be condoned by the HoD. (R7.11)\nMore than 2 weeks: apply through HoD and Dean (FET) to Dean (Academic Courses). (R7.12)\nMedical absence above 20 working days: you may withdraw from the semester. (R7.14)\nAbsent over 4 weeks without informing: name removed from rolls. (R7.15)"],
+["Passing marks","pass,passing,pass mark,minimum marks,fail,50 percent,40 percent","To pass a course you need at least 50% of total marks (CA + End Semester) AND at least 40% of the end semester exam marks. Below 50% total gives ‘RA’ (reappearance). (R14.1, R14.2)"],
+["Grades and grade points","grade,grades,grade point,letter grade,o grade,ra,sa,outstanding","O = 91–100 (10 points)\nA+ = 81–90 (9)\nA = 71–80 (8)\nB+ = 61–70 (7)\nB = 56–60 (6)\nC = 50–55 (5)\nRA = below 50 (0, reappear)\nSA = shortage of attendance, W = withdrawal. (R15.1)"],
+["CGPA and percentage","cgpa,gpa,percentage,convert,calculate cgpa","GPA = Σ(credits × grade points) ÷ Σ credits of the semester. CGPA is calculated the same way across all semesters. (R15.5.2)\nPercentage = CGPA × 10. (R15.5.4)"],
+["Degree classification","class,first class,distinction,second class,classification,honours class","First Class with Distinction: CGPA ≥ 8.00, all courses cleared in first appearance within 5 years (4 for lateral entry), and never prevented by attendance. (R16.2.21)\nFirst Class: CGPA ≥ 6.50, all courses passed within 5 years (4 for lateral entry). (R16.2.22)\nOthers who qualify get Second Class. (R16.2.23)"],
+["Marks distribution","weightage,marks distribution,continuous assessment,ca marks,end semester marks,internal marks,theory marks,lab marks","Theory: 40 CA + 60 End Sem\nLaboratory: 75 CA + 25 End Sem\nTheory integrated with lab: 20 theory CA + 20 lab CA + 60 End Sem\nLab integrated with theory: 25 theory + 50 lab CA + 25 End Sem\nProject: 60 CA + 40 End Sem\nValue added / skill / internship / 1-credit online: 100 CA only. (Table 7)"],
+["Internal tests (theory)","internal,test,assessment,mid term,midterm,model exam,objective,handwritten,notes,quiz","Three tests per theory course:\n1) First test: days 30–35 (up to 4 weeks syllabus), min 1 hour.\n2) Mid-term: days 60–65, 2 hours.\n3) Model exam: days 80–85, 3 hours.\nAlso: handwritten notes (10 marks), objective test of 20 marks (days 45–60, 60 min), and quiz / seminar / mini-project (20 marks). All CA is finally converted to 40 marks. (R13.5.2)"],
+["Missed an assessment","missed test,missed assessment,reassessment,re-assessment,absent test","If you miss a test due to medical reasons or participation in college/university/state/national/international events (with prior permission of HoD and Dean FET), only one re-assessment is given at the end of the semester with Dean (Academic Courses) approval. (R13.5.3)"],
+["Arrears and reappearance","arrear,arrears,reappear,reappearance,ra grade,backlog,fail again,three attempts","If you get RA, register and write the end semester exam in the next semester. Your CA marks are kept for one subsequent arrear attempt. (R14.3)\nYou get a maximum of three arrear attempts; after that you must redo the course. (R6.11.3)\nFrom the 3rd attempt, you pass with 50% total (40% CA + 60% ESE) or 50% in end sem alone. (R14.3)\nYou cannot reappear for a course you already passed to improve marks. (R6.10.4)"],
+["Supplementary exam","supplementary,supply,special exam","Only students with ‘RA’ and the required attendance can apply. Fee is double the regular exam fee. Only ONE supplementary chance per course. Held in the first two weeks after the next semester starts. Minimum 50% of end-semester marks is needed to pass. (R15.7)"],
+["Revaluation","revaluation,revaluate,photocopy,answer script,answer sheet,retotal","Apply for a photocopy of your theory answer paper within 2 weeks of results (with fee) through the HoD to the Controller of Examinations. You can view the script, get it retotaled, and then register for revaluation. Not allowed for practicals, Project Phase 1 and 2, and Employability Enhancement Courses. (R15.6)"],
+["Credits and curriculum","credits,credit,180,total credits,curriculum,how many credits,credit system","Maximum 180 credits for the B.Tech degree. Foundation 60, Professional Core 60, Professional Elective 18, Open Elective 9, Employability Enhancement 27, Online 6. Audit courses are non-credit. (Table 1, R4.4)\nCredit assignment: 1 lecture period = 1, 1 tutorial period = 1, 2 practical periods = 1. (Table 2)\nMax credits registered in a semester: 30. (R6.9.5)"],
+["Duration of programme","duration,years,how long,maximum years,semesters,14 semesters,working days","Normally 8 semesters (4 years). Maximum 14 semesters (7 years) for regular entry and 12 semesters (6 years) for lateral entry. Each semester has about 90 working days. (R5)"],
+["Admission and lateral entry","admission,eligibility,lateral,diploma,bsc,transfer,join,12th,hsc","First year: passed 10+2 with Maths, Physics and Chemistry (or vocational stream). (R2.1)\nLateral entry to 3rd semester: Diploma in Engineering/Technology, or B.Sc. with Maths (extra engineering courses needed). (R2.2)\nTransfer from other institutions: no standing arrears, approval of Equivalence Committee and Dean (Academic Courses). (R2.3)"],
+["Programmes offered","programmes,programs,branches,courses offered,departments,cse,ece,eee,mech,civil,aerospace,biotech","B.Tech: Aerospace, Biotechnology, Computer Science and Engineering, CSE (AI & ML), CSE (Cyber Security), Electronics and Communication, Electrical and Electronics, Mechanical, Civil, and Artificial Intelligence and Data Science. (R3.1)"],
+["Change of branch","change branch,change programme,change of programme,branch change,transfer branch","Allowed only after completing the first year (2 semesters). Apply to Dean (Academic Courses) at the beginning of the 2nd semester, with up to 3 preferences. Decided by merit (CGPA after sem 2) and vacancy. Effective from the 3rd semester, and the change is final and binding. (R3.2)"],
+["Add or drop courses","add,drop,register,registration,late registration,enroll,enrollment,dues","Registration starts 5 working days before the next semester. You can add/drop within 5 working days after the semester begins. From sem 3 you may drop up to 8 credits. Late registration is allowed up to 2 weeks with a fine. You must clear all dues (hostel, library, lab) and fees before enrolling. (R6)"],
+["Honours degree","honours,honors,b.tech honours,additional 20 credits","Register from the 3rd semester. You must have cleared sem 1 and 2 in the first attempt with CGPA ≥ 8.0, and complete an additional 20 credits (all in first attempt, CGPA ≥ 8.0). Final CGPA ≥ 8.0 at the end of sem 8 is needed for the award. (R4.18, R16.2)"],
+["Minor / Specialization","minor,specialization,specialisation,other discipline,vertical","Minor: extra 20 credits in another discipline, from semester III, with a one-time non-refundable registration fee and extra tuition/exam fee. Up to 6 credits can be online. (R4.18.4–R4.18.8)\nSpecialization: extra 20 credits in your own programme domain. (R16.2.16)\nYou can pick only one of Honours or Minor."],
+["Project work","project,project work,phase 1,phase 2,viva,review,report,group,team","Project Phase 1 is in semester VII and Phase 2 in semester VIII (same team and guide). Group size is up to 3. Marks: 60 CA (three reviews: 10, 20, 30) + 40 end semester (report + viva). (R13.8)\nReport deadline: last working day; up to 30 days extension with Dean approval and double viva fee. If not submitted, you fail the project. (R13.8.5)\nIndustrial project in place of the final semester project is allowed with approval. (R4.15.3)"],
+["Internship and industrial visit","internship,industrial training,training,industrial visit,visit,summer","Industrial training/internship: min 6 weeks (slots of 2 weeks) in vacations. Credits: 2 weeks = 1, 4 weeks = 2, 6+ weeks = 3. Evaluation: report 40 + presentation 30 + viva 30. (R4.13, R13.10)\nIndustrial visit: one every year from the second year. (R4.14)"],
+["Online courses (NPTEL/SWAYAM)","nptel,swayam,online course,mooc,online,off campus","NPTEL/SWAYAM and similar online courses are allowed. Credits: 4 weeks = 1, 8 weeks = 2, 12+ weeks = 3. Maximum 6 online credits. (R4.17, R13.13)\nUp to 3 off-campus courses can replace professional/open electives with approval."],
+["NCC / NSS / NSO / YRC / RRC","ncc,nss,nso,yrc,rrc,red ribbon,red cross,character development,camp","Every student must join one of NCC / NSS / NSO / YRC / RRC in the first year: about 80 hours of training, a 7-day camp, and 75% attendance. It carries 2 credits and a satisfactory grade is compulsory for the degree. (R4.9, R15.2)"],
+["Break of study","break of study,break,gap,startup,entrepreneur,job","Break of study is granted by the Dean (Academic Courses) only once, for a maximum of 1 year, for valid reasons. Prescribed fee must be paid during the break. Taking up a job/start-up also needs a 1-year authorized break. It is not counted for degree classification time. (R17)"],
+["Withdrawal from exam","withdraw exam,withdrawal,exam withdrawal,skip exam","Allowed only once in the whole programme, for valid reasons (medical, family, approved sports), for one exam or consecutive exams. Apply at least 10 days before the exam; HoD, Dean (FET) recommend and Dean (Academic Courses) approves. Not for arrear courses or CA tests. (R18)"],
+["Discipline and ragging","discipline,ragging,malpractice,punishment,misbehaviour,misbehavior,conduct,cheating","Students must maintain discipline inside and outside the institution. Cases go to the Discipline and Welfare Committee. Exam malpractice leads to punitive action. Ragging is a criminal, non-bailable offence; offenders are dismissed and cannot join any other institution. (R19)"],
+["Exam timing and duration","exam,end semester,semester exam,exam duration,when exam,3 hours,exam month","End semester exams are 3 hours long. Odd semesters: October–December. Even semesters: April–June. Practical exams have an external examiner and are usually before theory exams. (R13, R13.7.5)"],
+["Mentor and class advisor","mentor,class advisor,advisor,counsel,class committee,committee","Each student has a Mentor (max 20 students per mentor) who guides course registration, attendance and progress. A Class Advisor handles attendance/marks records and communication. Class Committee is formed within 7 days of classes, has at least 4 student representatives, and meets first within 10 days. (R8–R10)"],
+["Degree eligibility","degree,eligible,graduate,convocation,award of degree,eligibility for degree","To get the B.Tech degree: earn all required credits, pass all courses of 8 semesters within 7 years (6 for lateral), pass any additional courses prescribed, complete NCC/NSS/NSO/YRC/RRC, and have no pending disciplinary action. (R16.1)"],
+["Vision, mission and motto","vision,mission,motto,about pmist,about college,quality policy,address","PMIST (Periyar Maniammai Institute of Science & Technology), Vallam, Thanjavur - 613403, Tamil Nadu.\nMotto: THINK – INNOVATE – TRANSFORM.\nVision: To be a university of global dynamism with excellence in knowledge and innovation, ensuring social responsibility for creating an egalitarian society."],
+["Course code format","course code,code format,8 characters,subject code","Course code has 8 characters: Part 1 U/P (UG/PG), Part 2 regulation year (2 digits), Part 3 category (2 letters like CS, MA, GE, EM, VA, AU), Part 4 classification digit (1–4 year of study, 6 specialization, 7 open elective, 8 online, 9 programme elective), Part 5 sequence (01–49 odd sem, 51–99 even sem). (R4.11)"]
+];
+var log=document.getElementById("log"),q=document.getElementById("q");
+function add(t,c,extra){var d=document.createElement("div");d.className="m "+c;d.textContent=t;if(extra){var s=document.createElement("small");s.textContent=extra;d.appendChild(s)}log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+function score(text,e){var t=" "+text.toLowerCase().replace(/[^a-z0-9.+ ]/g," ")+" ",s=0,ks=e[1].split(",");for(var i=0;i<ks.length;i++){var k=ks[i];if(t.indexOf(k)>-1)s+=k.length>4?k.length:2}
+var tw=e[0].toLowerCase();if(t.indexOf(tw)>-1)s+=10;return s}
+function localAnswer(text){var best=[],i;for(i=0;i<KB.length;i++){var s=score(text,KB[i]);if(s>0)best.push([s,i])}
+best.sort(function(a,b){return b[0]-a[0]});
+if(!best.length){add("Sorry, I couldn’t find that in the R-2024 regulations. Try words like attendance, arrear, CGPA, project, internship, honours, or leave.","b");return}
+var top=KB[best[0][1]];add(top[0]+"\n\n"+top[2],"b",best.length>1?"Related: "+best.slice(1,3).map(function(x){return KB[x[1]][0]}).join(" · "):"");}
+function answer(text){
+var best=[],i;for(i=0;i<KB.length;i++){var s=score(text,KB[i]);if(s>0)best.push([s,i])}
+best.sort(function(a,b){return b[0]-a[0]});
+if(!best.length){localAnswer(text);return}
+var ctx=best.slice(0,3).map(function(x){return KB[x[1]][0]+": "+KB[x[1]][2]}).join("\n\n");
+var wait=add("Thinking…","b");
+fetch("/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:text,context:ctx})})
+.then(function(r){if(!r.ok)throw new Error("bad");return r.json()})
+.then(function(d){wait.remove();add(d.answer,"b","AI answer based on PMIST R-2024 regulations")})
+.catch(function(){wait.remove();localAnswer(text)});
+}
+function ask(t){t=t.trim();if(!t)return;add(t,"u");setTimeout(function(){answer(t)},250);q.value=""}
+document.getElementById("send").onclick=function(){ask(q.value)};
+q.addEventListener("keydown",function(e){if(e.key==="Enter")ask(q.value)});
+["Minimum attendance?","How are grades given?","What if I get an arrear?","Project rules","Internship credits","How is CGPA calculated?","Honours degree"].forEach(function(t){var b=document.createElement("button");b.textContent=t;b.onclick=function(){ask(t)};document.getElementById("chips").appendChild(b)});
+add("Hi! 👋 I’m the PMIST Regulations Bot. Ask me about attendance, exams, grades, arrears, credits, projects, honours and more (B.Tech R-2024).","b");
+</script>
+</body>
+</html>
